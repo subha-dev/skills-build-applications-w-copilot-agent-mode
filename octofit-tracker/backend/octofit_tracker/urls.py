@@ -20,6 +20,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from . import views
+import os
 
 # Create a router and register our viewsets with it
 router = DefaultRouter()
@@ -32,12 +33,24 @@ router.register(r'workouts', views.WorkoutViewSet)
 # API Root view
 @api_view(['GET'])
 def api_root(request):
+    # Get Codespace name from environment variable
+    codespace_name = os.environ.get('CODESPACE_NAME')
+    
+    # Build base URL based on environment
+    if codespace_name:
+        # Use HTTPS for Codespace URL to avoid certificate issues
+        base_url = f'https://{codespace_name}-8000.app.github.dev/api'
+    else:
+        # Fall back to request's host for local development
+        scheme = 'https' if request.is_secure() else 'http'
+        base_url = f'{scheme}://{request.get_host()}/api'
+    
     return Response({
-        'users': reverse('user-list', request=request),
-        'teams': reverse('team-list', request=request),
-        'activities': reverse('activity-list', request=request),
-        'leaderboard': reverse('leaderboard-list', request=request),
-        'workouts': reverse('workout-list', request=request),
+        'users': f'{base_url}/users/',
+        'teams': f'{base_url}/teams/',
+        'activities': f'{base_url}/activities/',
+        'leaderboard': f'{base_url}/leaderboard/',
+        'workouts': f'{base_url}/workouts/',
     })
 
 urlpatterns = [
